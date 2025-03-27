@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Button, TextField, Typography, Box, Paper, CircularProgress, Tabs, Tab, Grid } from "@mui/material";
+import { 
+  Button, 
+  TextField, 
+  Typography, 
+  Box, 
+  Paper, 
+  CircularProgress, 
+  Tabs, 
+  Tab, 
+  Grid 
+} from "@mui/material";
 
 const FileUpload = ({ onAnalysisCompleted }) => {
   const [file, setFile] = useState(null);
@@ -49,7 +59,7 @@ const FileUpload = ({ onAnalysisCompleted }) => {
         
         // Poll for analysis results
         let attempts = 0;
-        const maxAttempts = 30; // More attempts for longer processing
+        const maxAttempts = 30;
         const pollInterval = setInterval(async () => {
           try {
             console.log(`Checking status for file ID: ${response.data.fileId}`);
@@ -59,7 +69,6 @@ const FileUpload = ({ onAnalysisCompleted }) => {
               clearInterval(pollInterval);
               setMessage("Analysis completed successfully!");
               
-              // Call the callback with the analysis results
               if (onAnalysisCompleted) {
                 onAnalysisCompleted(analysisResponse.data.result);
               }
@@ -74,7 +83,7 @@ const FileUpload = ({ onAnalysisCompleted }) => {
             console.error("Error polling for analysis:", pollError);
             clearInterval(pollInterval);
           }
-        }, 3000); // Poll every 3 seconds
+        }, 3000);
       } else {
         setMessage("Upload failed. Please try again.");
       }
@@ -103,11 +112,9 @@ const FileUpload = ({ onAnalysisCompleted }) => {
       if (response.data.success) {
         setMessage("Text submitted successfully for analysis!");
         
-        // If response already includes analysis results, call the callback
         if (response.data.result && onAnalysisCompleted) {
           onAnalysisCompleted(response.data.result);
         } else if (response.data.submissionId) {
-          // Poll for analysis results
           let attempts = 0;
           const maxAttempts = 30;
           const pollInterval = setInterval(async () => {
@@ -118,7 +125,6 @@ const FileUpload = ({ onAnalysisCompleted }) => {
                 clearInterval(pollInterval);
                 setMessage("Analysis completed successfully!");
                 
-                // Call the callback with the analysis results
                 if (onAnalysisCompleted) {
                   onAnalysisCompleted(analysisResponse.data.result);
                 }
@@ -133,7 +139,7 @@ const FileUpload = ({ onAnalysisCompleted }) => {
               console.error("Error polling for analysis:", pollError);
               clearInterval(pollInterval);
             }
-          }, 3000); // Poll every 3 seconds
+          }, 3000);
         }
       } else {
         setMessage("Analysis request failed. Please try again.");
@@ -147,7 +153,16 @@ const FileUpload = ({ onAnalysisCompleted }) => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, maxWidth: 600, mx: "auto", mt: 3 }}>
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        p: 3, 
+        maxWidth: 600, 
+        mx: "auto", 
+        mt: 3,
+        backgroundColor: 'background.paper'
+      }}
+    >
       <Typography variant="h5" component="h2" gutterBottom align="center">
         Content Moderation
       </Typography>
@@ -166,11 +181,7 @@ const FileUpload = ({ onAnalysisCompleted }) => {
           </Typography>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={8}>
-              <Button
-                variant="contained"
-                component="label"
-                fullWidth
-              >
+              <Button variant="contained" component="label" fullWidth>
                 Select File
                 <input
                   type="file"
@@ -199,7 +210,10 @@ const FileUpload = ({ onAnalysisCompleted }) => {
           )}
           {fileDetails && fileDetails.fileUrl && (
             <Typography variant="body2" sx={{ mt: 1 }}>
-              File uploaded: <a href={fileDetails.fileUrl} target="_blank" rel="noopener noreferrer">View file</a>
+              File uploaded:{" "}
+              <a href={fileDetails.fileUrl} target="_blank" rel="noopener noreferrer">
+                View file
+              </a>
             </Typography>
           )}
         </Box>
@@ -232,8 +246,12 @@ const FileUpload = ({ onAnalysisCompleted }) => {
 
       {message && (
         <Box mt={2}>
-          <Typography 
-            color={message.includes("successful") || message.includes("completed") ? "success.main" : "error.main"}
+          <Typography
+            color={
+              message.includes("successful") || message.includes("completed")
+                ? "success.main"
+                : "error.main"
+            }
           >
             {message}
           </Typography>

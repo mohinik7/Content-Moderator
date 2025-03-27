@@ -325,13 +325,14 @@ async function analyzeWithGemini(text) {
         return "Contextual analysis is not available. Please configure Gemini API key.";
       }
       
-      const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=${process.env.GEMINI_API_KEY}`;
+      // Updated API endpoint with the correct model name for the free tier
+      const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-      console.log(`Attempting Gemini API analysis (attempt ${retries + 1}/${MAX_RETRIES + 1})...`);
+      console.log(`Attempting Gemini API analysis with gemini-2.0-flash model (attempt ${retries + 1}/${MAX_RETRIES + 1})...`);
       
       const response = await axios.post(GEMINI_API_URL, {
-        contents: [{ 
-          parts: [{ 
+        contents: [{
+          parts: [{
             text: `Analyze the following text for harmful content, specifically identifying:
             1. Whether this contains cyberbullying, toxicity, or harmful language
             2. The specific type of harmful content (e.g., insults, threats, hate speech)
@@ -341,12 +342,20 @@ async function analyzeWithGemini(text) {
             Provide a brief, objective assessment focused on content moderation.
             
             Text to analyze:
-            "${text}"` 
-          }] 
+            "${text}"`
+          }]
         }],
+        generationConfig: {
+          temperature: 0.4,
+          topK: 32,
+          topP: 0.95,
+          maxOutputTokens: 1024
+        }
       }, {
-        timeout: 10000 // 10 second timeout
+        timeout: 15000 // 15 second timeout
       });
+
+      console.log("Gemini API response received");
 
       if (response.data && response.data.candidates && response.data.candidates[0] && response.data.candidates[0].content) {
         const content = response.data.candidates[0].content;
@@ -355,13 +364,13 @@ async function analyzeWithGemini(text) {
         }
       }
       
-      return response.data.candidates[0]?.output || "No response from Gemini.";
+      return "Unable to extract meaningful analysis from Gemini API response.";
     } catch (error) {
       retries++;
       console.error(`Error analyzing with Gemini (attempt ${retries}/${MAX_RETRIES + 1}):`, error.message);
       
       if (error.response) {
-        console.error(`Gemini API error: Status ${error.response.status}, Data:`, error.response.data);
+        console.error(`Gemini API error: Status ${error.response.status}, Data:`, JSON.stringify(error.response.data).substring(0, 300));
       }
       
       // If we haven't reached max retries, wait before retrying
@@ -370,7 +379,7 @@ async function analyzeWithGemini(text) {
         await new Promise(resolve => setTimeout(resolve, delayMs));
         console.log(`Retrying Gemini API analysis in ${delayMs}ms...`);
       } else {
-        return "Unable to perform contextual analysis after multiple attempts.";
+        return "Unable to perform contextual analysis at this time. Please try again later.";
       }
     }
   }

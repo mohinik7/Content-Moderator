@@ -11,12 +11,21 @@ import {
   LinearProgress,
   Alert
 } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 const ContentAnalysisResults = ({ analysisData }) => {
-  // If no data is provided, show a placeholder
   if (!analysisData) {
     return (
-      <Paper elevation={3} sx={{ p: 3, mt: 3, maxWidth: 600, mx: 'auto' }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 3, 
+          mt: 3, 
+          maxWidth: 600, 
+          mx: 'auto', 
+          backgroundColor: 'background.paper'
+        }}
+      >
         <Typography variant="h6" align="center">No analysis data available</Typography>
         <Typography variant="body2" align="center" color="text.secondary">
           Submit content for analysis to see results here
@@ -25,7 +34,6 @@ const ContentAnalysisResults = ({ analysisData }) => {
     );
   }
 
-  // Extract toxicity scores from the analysis data
   const { 
     toxicityAnalysis, 
     geminiAnalysis,
@@ -34,17 +42,14 @@ const ContentAnalysisResults = ({ analysisData }) => {
     originalText 
   } = analysisData;
 
-  // Helper function to determine severity level based on score
   const getSeverityLevel = (score) => {
     if (score < 0.3) return { level: 'Low', color: 'success' };
     if (score < 0.7) return { level: 'Medium', color: 'warning' };
     return { level: 'High', color: 'error' };
   };
 
-  // Function to render a score bar
   const renderScoreBar = (label, score) => {
     const severity = getSeverityLevel(score);
-    
     return (
       <Box sx={{ mb: 2 }}>
         <Grid container justifyContent="space-between" alignItems="center">
@@ -70,7 +75,6 @@ const ContentAnalysisResults = ({ analysisData }) => {
     );
   };
 
-  // Overall classification chip
   const getOverallChip = () => {
     if (!classification) return null;
     
@@ -92,7 +96,16 @@ const ContentAnalysisResults = ({ analysisData }) => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mt: 3, maxWidth: 800, mx: 'auto' }}>
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        p: 3, 
+        mt: 3, 
+        maxWidth: 800, 
+        mx: 'auto',
+        backgroundColor: 'background.paper'
+      }}
+    >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5">Content Analysis Results</Typography>
         {getOverallChip()}
@@ -100,8 +113,7 @@ const ContentAnalysisResults = ({ analysisData }) => {
 
       <Divider sx={{ mb: 2 }} />
       
-      {/* Original Text */}
-      <Card variant="outlined" sx={{ mb: 3 }}>
+      <Card variant="outlined" sx={{ mb: 3, backgroundColor: 'background.default' }}>
         <CardContent>
           <Typography variant="subtitle1" gutterBottom>Analyzed Content</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -113,7 +125,7 @@ const ContentAnalysisResults = ({ analysisData }) => {
       <Grid container spacing={3}>
         {/* Toxicity Analysis */}
         <Grid item xs={12} md={6}>
-          <Card variant="outlined">
+          <Card variant="outlined" sx={{ backgroundColor: 'background.default' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>Toxicity Analysis</Typography>
               
@@ -135,12 +147,20 @@ const ContentAnalysisResults = ({ analysisData }) => {
 
         {/* LLM Analysis */}
         <Grid item xs={12} md={6}>
-          <Card variant="outlined">
+          <Card variant="outlined" sx={{ backgroundColor: 'background.default' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>Contextual Analysis</Typography>
               
               {geminiAnalysis ? (
-                <Typography variant="body2">{geminiAnalysis}</Typography>
+                <Box sx={{ 
+                  '& p': { my: 0.5 }, 
+                  '& strong': { fontWeight: 'bold' },
+                  '& h3': { fontSize: '1.1rem', fontWeight: 'bold', mt: 1.5, mb: 0.5 }
+                }}>
+                  <ReactMarkdown>
+                    {geminiAnalysis}
+                  </ReactMarkdown>
+                </Box>
               ) : (
                 <Typography color="text.secondary">Contextual analysis not available</Typography>
               )}
@@ -149,9 +169,11 @@ const ContentAnalysisResults = ({ analysisData }) => {
         </Grid>
       </Grid>
 
-      {/* Recommended Actions */}
       {classification && classification !== 'Safe' && (
-        <Alert severity={classification === 'Harmful' ? 'error' : 'warning'} sx={{ mt: 3 }}>
+        <Alert 
+          severity={classification === 'Harmful' ? 'error' : 'warning'} 
+          sx={{ mt: 3 }}
+        >
           <Typography variant="subtitle1">Recommended Action</Typography>
           <Typography variant="body2">
             {classification === 'Harmful' 
@@ -164,4 +186,4 @@ const ContentAnalysisResults = ({ analysisData }) => {
   );
 };
 
-export default ContentAnalysisResults; 
+export default ContentAnalysisResults;

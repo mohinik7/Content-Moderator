@@ -3,15 +3,28 @@ import Dashboard from "./components/Dashboard";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-// Create a theme instance
+// Create a dark theme
 const theme = createTheme({
   palette: {
+    mode: 'dark', // Ensures dark mode
     primary: {
-      main: '#3f51b5',
+      main: '#BB86FC', // Purple accent
     },
     secondary: {
-      main: '#f50057',
+      main: '#03DAC6', // Teal accent
     },
+    background: {
+      default: '#121212', // Dark background
+      paper: '#1E1E1E',   // Slightly lighter dark for paper
+    },
+    text: {
+      primary: '#FFFFFF',
+      secondary: '#B3B3B3',
+    },
+  },
+  typography: {
+    fontFamily: 'Inter, Roboto, sans-serif', // Modern font stack
+    // You can customize font sizes if desired
   },
 });
 
@@ -25,4 +38,5 @@ function App() {
 }
 
 export default App;
+
 

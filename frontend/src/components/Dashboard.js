@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, AppBar, Toolbar, Button, Tabs, Tab, Grid, CircularProgress } from '@mui/material';
+import { 
+  Container, 
+  Box, 
+  Typography, 
+  AppBar, 
+  Toolbar, 
+  Button, 
+  Tabs, 
+  Tab, 
+  Grid, 
+  CircularProgress 
+} from '@mui/material';
 import FileUpload from './FileUpload';
 import ContentAnalysisResults from './ContentAnalysisResults';
 import RecentSubmissions from './RecentSubmissions';
@@ -68,8 +79,14 @@ const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
+    <Box 
+      sx={{ 
+        flexGrow: 1, 
+        backgroundColor: 'background.default', 
+        minHeight: '100vh' 
+      }}
+    >
+      <AppBar position="static" sx={{ backgroundColor: 'background.paper' }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             AI Content Moderation
@@ -115,4 +132,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

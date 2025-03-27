@@ -32,7 +32,7 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
 
   if (!submissions || submissions.length === 0) {
     return (
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: 'background.paper' }}>
         <Typography variant="subtitle1" align="center">
           No recent submissions found
         </Typography>
@@ -40,7 +40,6 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
     );
   }
 
-  // Helper function to render the appropriate icon for classification
   const getClassificationIcon = (classification) => {
     switch (classification) {
       case 'Safe':
@@ -54,14 +53,13 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
     }
   };
 
-  // Helper function to format date
   const formatDate = (date) => {
     if (!date) return 'Unknown date';
     return new Date(date).toLocaleString();
   };
 
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" sx={{ backgroundColor: 'background.default' }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Recent Submissions
@@ -76,7 +74,7 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
                 sx={{ 
                   cursor: 'pointer',
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)'
                   }
                 }}
                 onClick={() => onSelectSubmission(submission.id)}
@@ -97,7 +95,12 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
                     </Box>
                   }
                   secondary={
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mt={0.5}>
+                    <Box 
+                      display="flex" 
+                      alignItems="center" 
+                      justifyContent="space-between" 
+                      mt={0.5}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         {formatDate(submission.createdAt)}
                       </Typography>
@@ -105,9 +108,13 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
                         label={submission.classification || 'Unclassified'} 
                         size="small"
                         color={
-                          submission.classification === 'Safe' ? 'success' :
-                          submission.classification === 'Potentially Harmful' ? 'warning' :
-                          submission.classification === 'Harmful' ? 'error' : 'default'
+                          submission.classification === 'Safe' 
+                            ? 'success' 
+                            : submission.classification === 'Potentially Harmful' 
+                              ? 'warning' 
+                              : submission.classification === 'Harmful' 
+                                ? 'error' 
+                                : 'default'
                         }
                         sx={{ ml: 1 }}
                       />
@@ -123,4 +130,4 @@ const RecentSubmissions = ({ submissions, loading, onSelectSubmission }) => {
   );
 };
 
-export default RecentSubmissions; 
+export default RecentSubmissions;
