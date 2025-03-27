@@ -47,5 +47,6 @@ function initializeFirebase() {
 module.exports = {
   initializeFirebase,
   getFirestore: () => admin.firestore(),
-  getDatabase: () => admin.database()
+  getDatabase: () => admin.database(),
+  FieldValue: admin.firestore.FieldValue
 }; 

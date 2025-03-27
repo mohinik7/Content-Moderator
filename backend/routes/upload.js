@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
 const { uploadFileToDrive } = require("../utils/driveUpload");
-const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
 const firebase = require('../utils/firebase-config');
@@ -34,7 +33,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       fileName: fileName,
       originalName: req.file.originalname,
       contentType: req.file.mimetype,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: firebase.FieldValue.serverTimestamp(),
       status: "uploaded"
     });
 
@@ -113,7 +112,7 @@ router.get("/test-firestore", async (req, res) => {
   try {
     const docRef = await db.collection("test").add({
       message: "Hello from API",
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: firebase.FieldValue.serverTimestamp(),
     });
     res.json({ success: true, docId: docRef.id });
   } catch (error) {

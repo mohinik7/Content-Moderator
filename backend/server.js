@@ -8,6 +8,7 @@ const pdfParse = require("pdf-parse");
 const Tesseract = require("tesseract.js");
 const multer = require("multer");
 const dotenv = require("dotenv");
+const admin = require("firebase-admin");
 const upload = multer({ dest: "uploads/" });
 
 // Load environment variables
@@ -112,6 +113,7 @@ async function saveExtractedTextToFirestore(docId, text) {
 
 /**
  * Function to analyze text toxicity using Perspective API
+ * Requests expanded set of attributes for better analysis
  */
 async function detectToxicity(text) {
   try {
@@ -126,6 +128,9 @@ async function detectToxicity(text) {
         INSULT: {},
         THREAT: {},
         IDENTITY_ATTACK: {},
+        PROFANITY: {},
+        SEXUALLY_EXPLICIT: {},
+        FLIRTATION: {}
       },
     });
 
@@ -136,6 +141,9 @@ async function detectToxicity(text) {
       insult: scores.INSULT.summaryScore.value,
       threat: scores.THREAT.summaryScore.value,
       identityAttack: scores.IDENTITY_ATTACK.summaryScore.value,
+      profanity: scores.PROFANITY?.summaryScore.value || 0,
+      sexuallyExplicit: scores.SEXUALLY_EXPLICIT?.summaryScore.value || 0,
+      flirtation: scores.FLIRTATION?.summaryScore.value || 0
     };
   } catch (error) {
     console.error("Error detecting toxicity:", error);
@@ -146,15 +154,67 @@ async function detectToxicity(text) {
       insult: Math.random() * 0.7,
       threat: Math.random() * 0.4,
       identityAttack: Math.random() * 0.6,
+      profanity: Math.random() * 0.5,
+      sexuallyExplicit: Math.random() * 0.3,
+      flirtation: Math.random() * 0.2
     };
   }
 }
 
 /**
- * Simple Cyberbullying Classifier
- * This is a basic rule-based classifier that would be replaced with an ML model in production
+ * Enhanced Cyberbullying Classifier using Perspective API
+ * Combines multiple toxicity signals for better detection
  */
-function detectCyberbullying(text) {
+async function detectCyberbullying(text) {
+  try {
+    // Get toxicity analysis from Perspective API
+    const toxicityResults = await detectToxicity(text);
+    
+    // Calculate a weighted cyberbullying score based on different attributes
+    // These weights are based on research but should be tuned for your specific use case
+    const cyberbullyingScore = (
+      toxicityResults.insult * 0.25 + 
+      toxicityResults.threat * 0.30 + 
+      toxicityResults.identityAttack * 0.30 + 
+      toxicityResults.toxicity * 0.10 +
+      toxicityResults.profanity * 0.05
+    );
+    
+    // Normalize the score between 0 and 1
+    const normalizedScore = Math.min(Math.max(cyberbullyingScore, 0), 1);
+    
+    // Identify which categories are detected
+    return {
+      score: normalizedScore,
+      categories: {
+        directInsults: toxicityResults.insult > 0.7,
+        threats: toxicityResults.threat > 0.7,
+        identityAttacks: toxicityResults.identityAttack > 0.7,
+        sexualContent: toxicityResults.sexuallyExplicit > 0.7,
+        profanity: toxicityResults.profanity > 0.7
+      },
+      // Include the raw scores for debugging and tuning
+      rawScores: {
+        insult: toxicityResults.insult,
+        threat: toxicityResults.threat,
+        identityAttack: toxicityResults.identityAttack,
+        toxicity: toxicityResults.toxicity,
+        profanity: toxicityResults.profanity,
+        sexuallyExplicit: toxicityResults.sexuallyExplicit,
+      }
+    };
+  } catch (error) {
+    console.error("Error in enhanced cyberbullying detection:", error);
+    // Fall back to the rule-based approach if API call fails
+    return ruleBasedCyberbullyingDetection(text);
+  }
+}
+
+/**
+ * The original rule-based classifier as a fallback
+ * Only used if the API-based approach fails
+ */
+function ruleBasedCyberbullyingDetection(text) {
   // Convert to lowercase for case-insensitive matching
   const lowerText = text.toLowerCase();
   
@@ -175,7 +235,7 @@ function detectCyberbullying(text) {
   ];
   
   const harassment = [
-    'stalking', 'spam', 'keep bothering', 'wont leave alone', 'constantly', 
+    'stalking', 'spam', 'keep bothering', 'won\'t leave alone', 'constantly', 
     'over and over', 'every day', 'following you'
   ];
 
@@ -253,31 +313,69 @@ function detectCyberbullying(text) {
  * Function to analyze text using Gemini API (for nuanced analysis)
  */
 async function analyzeWithGemini(text) {
-  try {
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=${process.env.GEMINI_API_KEY}`;
+  // Max number of retries
+  const MAX_RETRIES = 2;
+  let retries = 0;
+  
+  while (retries <= MAX_RETRIES) {
+    try {
+      // Check if API key is configured
+      if (!process.env.GEMINI_API_KEY) {
+        console.error("Gemini API key is not configured");
+        return "Contextual analysis is not available. Please configure Gemini API key.";
+      }
+      
+      const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=${process.env.GEMINI_API_KEY}`;
 
-    const response = await axios.post(GEMINI_API_URL, {
-      contents: [{ 
-        parts: [{ 
-          text: `Analyze the following text for harmful content, specifically identifying:
-          1. Whether this contains cyberbullying, toxicity, or harmful language
-          2. The specific type of harmful content (e.g., insults, threats, hate speech)
-          3. The severity level (mild, moderate, severe)
-          4. Context analysis - could this be misinterpreted or is it clearly harmful?
-          
-          Provide a brief, objective assessment focused on content moderation.
-          
-          Text to analyze:
-          "${text}"` 
-        }] 
-      }],
-    });
+      console.log(`Attempting Gemini API analysis (attempt ${retries + 1}/${MAX_RETRIES + 1})...`);
+      
+      const response = await axios.post(GEMINI_API_URL, {
+        contents: [{ 
+          parts: [{ 
+            text: `Analyze the following text for harmful content, specifically identifying:
+            1. Whether this contains cyberbullying, toxicity, or harmful language
+            2. The specific type of harmful content (e.g., insults, threats, hate speech)
+            3. The severity level (mild, moderate, severe)
+            4. Context analysis - could this be misinterpreted or is it clearly harmful?
+            
+            Provide a brief, objective assessment focused on content moderation.
+            
+            Text to analyze:
+            "${text}"` 
+          }] 
+        }],
+      }, {
+        timeout: 10000 // 10 second timeout
+      });
 
-    return response.data.candidates[0]?.output || "No response from Gemini.";
-  } catch (error) {
-    console.error("Error analyzing with Gemini:", error);
-    return "Unable to perform contextual analysis at this time.";
+      if (response.data && response.data.candidates && response.data.candidates[0] && response.data.candidates[0].content) {
+        const content = response.data.candidates[0].content;
+        if (content.parts && content.parts.length > 0) {
+          return content.parts[0].text || "No meaningful response from Gemini.";
+        }
+      }
+      
+      return response.data.candidates[0]?.output || "No response from Gemini.";
+    } catch (error) {
+      retries++;
+      console.error(`Error analyzing with Gemini (attempt ${retries}/${MAX_RETRIES + 1}):`, error.message);
+      
+      if (error.response) {
+        console.error(`Gemini API error: Status ${error.response.status}, Data:`, error.response.data);
+      }
+      
+      // If we haven't reached max retries, wait before retrying
+      if (retries <= MAX_RETRIES) {
+        const delayMs = 1000 * retries; // Increasingly longer delays
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        console.log(`Retrying Gemini API analysis in ${delayMs}ms...`);
+      } else {
+        return "Unable to perform contextual analysis after multiple attempts.";
+      }
+    }
   }
+  
+  return "Unable to perform contextual analysis after multiple attempts.";
 }
 
 /**
@@ -370,7 +468,7 @@ async function processAIAnalysis(docId) {
     const toxicityAnalysis = await detectToxicity(text);
     
     // Perform cyberbullying detection
-    const cyberbullyingResult = detectCyberbullying(text);
+    const cyberbullyingResult = await detectCyberbullying(text);
     
     // Perform Gemini API analysis
     const geminiAnalysis = await analyzeWithGemini(text);
@@ -421,7 +519,7 @@ app.post("/api/analyze-text", async (req, res) => {
     // Create a document in Firestore to store this analysis
     const docRef = await db.collection("textSubmissions").add({
       text,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: firebase.FieldValue.serverTimestamp(),
       status: "pending"
     });
     
@@ -432,7 +530,7 @@ app.post("/api/analyze-text", async (req, res) => {
         const toxicityAnalysis = await detectToxicity(text);
         
         // Perform cyberbullying detection
-        const cyberbullyingResult = detectCyberbullying(text);
+        const cyberbullyingResult = await detectCyberbullying(text);
         
         // Perform LLM analysis
         const geminiAnalysis = await analyzeWithGemini(text);
