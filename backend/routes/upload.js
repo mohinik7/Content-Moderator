@@ -4,11 +4,12 @@ const { uploadFileToDrive } = require("../utils/driveUpload");
 const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
+const firebase = require('../utils/firebase-config');
 
 const router = express.Router();
 
 // Initialize Firestore
-const db = admin.firestore();
+const db = firebase.getFirestore();
 
 // Configure Multer for file uploads (store in memory)
 const upload = multer({ storage: multer.memoryStorage() });

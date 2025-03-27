@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const admin = require("firebase-admin");
 const { google } = require("googleapis");
 const axios = require("axios");
 const fs = require("fs");
@@ -8,7 +7,16 @@ const path = require("path");
 const pdfParse = require("pdf-parse");
 const Tesseract = require("tesseract.js");
 const multer = require("multer");
+const dotenv = require("dotenv");
 const upload = multer({ dest: "uploads/" });
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Firebase
+const firebase = require('./utils/firebase-config');
+firebase.initializeFirebase();
+const db = firebase.getFirestore();
 
 const app = express();
 app.use(cors());
@@ -25,16 +33,6 @@ const downloadsDir = path.join(__dirname, "downloads");
 if (!fs.existsSync(downloadsDir)) {
   fs.mkdirSync(downloadsDir, { recursive: true });
 }
-
-// Load Firebase service account credentials
-const serviceAccount = require("./utils/content-moderator-drive.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://aicontentmoderator-default-rtdb.firebaseio.com", // Update if needed
-});
-
-const db = admin.firestore();
 
 // Import routes
 const uploadRoute = require("./routes/upload");
@@ -117,7 +115,7 @@ async function saveExtractedTextToFirestore(docId, text) {
  */
 async function detectToxicity(text) {
   try {
-    const PERSPECTIVE_API_URL = `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=AIzaSyDUQsQnuniQIy9rO01AO46pLrYRZ5qpukc`;
+    const PERSPECTIVE_API_URL = `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${process.env.PERSPECTIVE_API_KEY}`;
 
     const response = await axios.post(PERSPECTIVE_API_URL, {
       comment: { text: text },
@@ -256,7 +254,7 @@ function detectCyberbullying(text) {
  */
 async function analyzeWithGemini(text) {
   try {
-    const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=AIzaSyDIDWrQHM4mcimqUYJY3assbZXEfapk8h4";
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=${process.env.GEMINI_API_KEY}`;
 
     const response = await axios.post(GEMINI_API_URL, {
       contents: [{ 
